@@ -8,6 +8,7 @@ from nltk.stem.snowball import SnowballStemmer
 from nltk import WordNetLemmatizer, word_tokenize
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import SGDClassifier, Perceptron
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
@@ -38,15 +39,7 @@ def cleaning(text):
                                u"\U000024C2-\U0001F251"
                                "]+", flags=re.UNICODE)
     text = emoji_pattern.sub('', text)
-
-    def stem_lem(txt):
-        txt = lemmatizer.lemmatize(txt)
-        txt = stemmer.stem(txt)
-        return txt
-
     text = ' '.join(list(map(lemmatizer.lemmatize, word_tokenize(text))))
-    text = text.replace('not', '')
-
     return text
 
 
@@ -63,9 +56,10 @@ def main():
 
     df = pd.DataFrame(data, columns=['sentiment', 'review'])
 
-    unigram_cv = CountVectorizer(stop_words='english', ngram_range=(1, 1))
+    unigram_cv = CountVectorizer(ngram_range=(1, 1))
+    bigrams_cv = CountVectorizer(ngram_range=(2, 2))
     txt = unigram_cv.fit_transform(df['review'])
-    x_train, x_test, y_train, y_test = train_test_split(txt, df['review'], test_size=0.2, shuffle=True)
+    x_train, x_test, y_train, y_test = train_test_split(txt, df['sentiment'], test_size=0.3, shuffle=True)
 
     # Multinomial Naive Bayes
     nb = MultinomialNB()
@@ -81,6 +75,12 @@ def main():
     accuracy = accuracy_score(predicted, y_test)
     print(accuracy)
 
+    # Perceptron
+    per = Perceptron()
+    per.fit(x_train, y_train)
+    predicted = per.predict(x_test)
+    accuracy = accuracy_score(predicted, y_test)
+    print(accuracy)
 
     pass
 
